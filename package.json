@@ -1,0 +1,19 @@
+{
+  "name": "solidity-bank",
+  "version": "1.0.0",
+  "description": "Bank to hold deposits and issue withdrawals",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rfarina/solidity-bank.git"
+  },
+  "author": "Rick Farina",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rfarina/solidity-bank/issues"
+  },
+  "homepage": "https://github.com/rfarina/solidity-bank#readme"
+}
