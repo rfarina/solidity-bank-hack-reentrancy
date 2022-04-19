@@ -1,0 +1,33 @@
+1000000000000000000
+1000000000000000000
+1000000000000000000
+1000000000000000000
+
+// send 2 ether to contract balance from account[0]
+await web3.eth.sendTransaction({from:'0x18f712b933608771c74e632e80c8Bc179D1a6db0', to:bank.address, value:'10000000000000000000'})
+
+// send 100 ether to contract balance of hacker to cover gas from account[1]
+// await web3.eth.sendTransaction({from:'0xEE7DaeFEA95b0C738A93E7194103f5D64DAeB3fC', to:hack.address, value:'100000000000000000000'})
+
+// send 100 ether to contract balance of hacker to cover gas from account[1]
+await hack.initializeBalance({from:'0xEE7DaeFEA95b0C738A93E7194103f5D64DAeB3fC', value:'100000000000000000000'})
+
+
+
+// deposit 1 ether into balance mapping of account[1]
+await bank.deposit({from:'0xf9A8f18055e030d241b5d939D05195Da7f51fC3E', value:'1000000000000000000'})
+
+// get deposit balance (mapping) of hacker contract
+depBal = await bank.getDepositBalance({from:'0x6e242045E8f82A511d36B119223C00a4DC7867fE'})
+depBal.toString()
+
+// withdraw 1 ether from Bank into hacker contract
+await bank.withdraw(hack.address, '1000000000000000000',{from:'0x4f9cF02ba82d47638490E7BB003979B47eF8fB5E'})
+
+// check updated balance of account[1]  // sb +1 
+actBal = await web3.eth.getBalance('0x978d53e3F09429573531d6ff947fcD957038C56E')
+
+// check updated balance of bank contract balance // sb -1
+bnkBal = await web3.eth.getBalance(bank.address)
+
+
