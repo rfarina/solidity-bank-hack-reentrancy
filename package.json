@@ -1,5 +1,5 @@
 {
-  "name": "solidity-bank",
+  "name": "solidity-bank-hack-reentrancy",
   "version": "1.0.0",
   "description": "Bank to hold deposits and issue withdrawals",
   "main": "index.js",
@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rfarina/solidity-bank.git"
+    "url": "git+https://github.com/rfarina/solidity-bank-hack-reentrancy.git"
   },
   "author": "Rick Farina",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rfarina/solidity-bank/issues"
+    "url": "https://github.com/rfarina/solidity-bank-hack-reentrancy/issues"
   },
-  "homepage": "https://github.com/rfarina/solidity-bank#readme"
+  "homepage": "https://github.com/rfarina/solidity-bank-hack-reentrancy#readme"
 }
