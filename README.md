@@ -10,7 +10,7 @@ Bank-hack is a Solidity application that simulates a reentrancy attack which occ
 
 However, a security flaw that went unnoticed allowed the attacking contract to recursively invoke the withdraw function and have it send 1 ether for each invocation until the victim contract’s balance was depleted! This occurred because the victim contract did not reduce the attacker’s deposit balance until _after_ it sent the funds. Recognizing this security vulnerability, the attacking contract was able to invoke the withdrawal function repeatedly until the victim contract’s account balance was nearly depleted! This hack is infamously known as the Reentracy Hack.
 
-The purpose of this application is to recreate the reentrancy attack using a victim Bank contract, and an attacker BankHacker contract. The attack takes place by invoking the BankHacker “makeDeposit()” function. This function will deposit 1 ether into the bank, then immediately withdraw it legitimately. However, when the Bank contract sends the 1 ether withdrawal to the attacking contract, it hits the “receive()” function. The “receive()” function automatically adds to the BankHacker contract balance, and then invokes the Bank contract’s “withdraw()” function provided the Bank contract balance is >= 1 ether; thus, effectively depleting the account. 
+The purpose of this application is to recreate the reentrancy attack using a victim Bank contract, and an attacker BankHacker contract. The attack takes place by invoking the BankHacker “makeDeposit()” function. This function will deposit 1 ether into the bank, then immediately withdraw it legitimately. However, when the Bank contract sends the 1 ether withdrawal to the attacking contract, it hits the “receive()” function. The “receive()” function automatically adds to the BankHacker contract balance, and then invokes the Bank contract’s “withdraw()” function again, provided the Bank contract balance is >= 1 ether. This loop continues until the Bank contract account balance is effectively depleted.
 
 To avoid this security flaw, it has been well established that contracts should reduce the deposit balance first, then send the funds. This will allow the Bank contract to avoid this type of attack. Another approach to avoiding this issue is to implement the use of a reentrancy guard, such as provided by OpenZeppelin. You can read more about this at [https://blog.openzeppelin.com/reentrancy-after-istanbul/](https://blog.openzeppelin.com/reentrancy-after-istanbul/).
 
@@ -80,6 +80,6 @@ truffle migrate ---reset (should result in Accounts created and Contracts deploy
 
 # Attributions
 
-Original idea from Mastering Ethereum, Andreas M. Antonopoulos
+Original idea from “Mastering Ethereum-Building Smart Contracts and DApps”, by Andreas M. Antonopoulos and Dr. Gavin Wood
 
 **_End of Document_**
