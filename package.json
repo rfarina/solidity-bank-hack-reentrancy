@@ -1,5 +1,5 @@
 {
-  "name": "solidity-bank-hack-reentrancy",
+  "name": "y",
   "version": "1.0.0",
   "description": "Bank to hold deposits and issue withdrawals",
   "main": "index.js",
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/rfarina/solidity-bank-hack-reentrancy/issues"
   },
-  "homepage": "https://github.com/rfarina/solidity-bank-hack-reentrancy#readme"
+  "homepage": "https://github.com/rfarina/solidity-bank-hack-reentrancy#readme",
+  "directories": {
+    "test": "test"
+  }
 }
