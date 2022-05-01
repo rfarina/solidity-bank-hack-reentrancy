@@ -1,20 +1,16 @@
-1000000000000000000
-1000000000000000000
-1000000000000000000
-1000000000000000000
 
 bank = await Bank.deployed()
 hack = await BankHacker.deployed()
 
 
-// send 10 ether to contract balance from account[0]
-await web3.eth.sendTransaction({from:'0xC1F89D7cF81b3438F3E70A3f6165Fc48Dd867930', to:bank.address, value:'10000000000000000000'})
+// send 5 ether to contract balance from account[0]
+await web3.eth.sendTransaction({from:'0x0ba4b225BC9f036c88D2E28B638E91126432B2D8', to:bank.address, value:'5000000000000000000'})
+
+// send 100 ether to contract balance of hacker to cover initial deposit from account[1]
+// await web3.eth.sendTransaction({from:'0xCE042f127436a4a621e87614a768fB88Bd502F92', to:hack.address, value:'100000000000000000000'})
 
 // send 100 ether to contract balance of hacker to cover gas from account[1]
-// await web3.eth.sendTransaction({from:'0xEE7DaeFEA95b0C738A93E7194103f5D64DAeB3fC', to:hack.address, value:'100000000000000000000'})
-
-// send 100 ether to contract balance of hacker to cover gas from account[1]
-await hack.initializeBalance({from:'0xC1d3a77C2e1CA3F2d0de9aC31062f8deCBa8940e', value:'100000000000000000000'})
+await hack.initializeBalance({from:'0xCE042f127436a4a621e87614a768fB88Bd502F92', value:'100000000000000000000'})
 
 
 
