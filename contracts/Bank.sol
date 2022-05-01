@@ -18,6 +18,8 @@ contract CalledContract {
 }
 
 contract Bank {
+    error InsufficientFundsToWithdraw();
+    error InsufficientFundsToMakeDeposit();
 
     CalledContract public externalContract;
 
@@ -25,6 +27,13 @@ contract Bank {
 
     event DepositMade (
         address intoAccount,
+        uint256 value
+    );
+
+    event TransmittingFunds (
+        address originTx,
+        address fromAddress,
+        address toAddress,
         uint256 value
     );
 
@@ -49,25 +58,48 @@ contract Bank {
         uint newDepositBalance
     );
 
+    event DepositBalanceNOTReduced (
+        uint balanceReducedBy,
+        uint newDepositBalance
+    );
+
     constructor() {
         externalContract = new CalledContract();
     }
 
-    function deposit(address payable depositor, uint value) external payable {
-        /* 
-            @dev payable function that accepts deposits from depositor
-         */
-
-        // deposit incoming funds
-        depositBalance[depositor] += value;
-
-        emit DepositMade(depositor, value);
+    function initializeBalance() external payable {
+        // Balance sent in msg.value will be added to contract balance automatically
+    }
+    function getDepositBalance(address depositor) external view returns (uint256) {
+        return depositBalance[depositor];
+    }
+    function getContractBalance() external view returns(uint) {
+        return address(this).balance;
     }
 
 
+    function deposit(address depositor) external payable {
+    // function deposit() external payable {
+        /* 
+            @dev payable function that accepts deposits from depositor
+         */
+        // if( depositor.balance < msg.value ) {
+        //     revert InsufficientFundsToMakeDeposit();
+        // }
+
+        // deposit into bank account
+        depositBalance[depositor] += msg.value;
+
+        emit DepositMade(depositor, msg.value);
+    }
+
+
+
     function withdraw(address payable withdrawToAddress, uint weiToWithdraw) external {
-        
-        require(depositBalance[withdrawToAddress] >= weiToWithdraw, 'Not enough ether in depositor balance to withdraw');
+
+        if (depositBalance[withdrawToAddress] < weiToWithdraw) {
+            revert InsufficientFundsToWithdraw();
+        }
 
         // // send requested funds via transfer()
         // try externalContract.transfer(payable(withdrawToAddress), weiToWithdraw) {
@@ -116,41 +148,48 @@ contract Bank {
         // }
 
         // send funds via call()
+        emit TransmittingFunds (
+            tx.origin,
+            address(this), 
+            withdrawToAddress, 
+            weiToWithdraw
+        );
         (bool success, bytes memory data) = withdrawToAddress.call{value:weiToWithdraw}("");  // send money to withdrawToAddress B4 deducting depositBalance !!
         if (success) {
             
-            emit FundsTransmitted (
-                tx.origin,
-                address(this), 
-                withdrawToAddress, 
-                weiToWithdraw, 
-                success,
-                data
-            );
+            // emit FundsTransmitted (
+            //     tx.origin,
+            //     address(this), 
+            //     withdrawToAddress, 
+            //     weiToWithdraw, 
+            //     success,
+            //     data
+            // );
         } else {
 
-            emit FundsTransmissionFailure(
-                address(this), 
-                withdrawToAddress, 
-                weiToWithdraw, 
-                bytes("send funds via call() failed...")
-            );
+            // emit FundsTransmissionFailure(
+            //     address(this), 
+            //     withdrawToAddress, 
+            //     weiToWithdraw, 
+            //     bytes("send funds via call() failed...")
+            // );
         }
 
 
         // reduce balance
-        depositBalance[withdrawToAddress] -= weiToWithdraw;
-        
-        emit DepositBalanceReduced(
-            weiToWithdraw, 
-            depositBalance[withdrawToAddress]
-        );
-    }
-    function getDepositBalance(address depositor) external view returns (uint256) {
-        return depositBalance[depositor];
-    }
+        if (depositBalance[withdrawToAddress] >= weiToWithdraw) {
+            depositBalance[withdrawToAddress] -= weiToWithdraw;
 
-    receive() external payable {
-        // allow ether to be posted to this contract's ether balance
+            emit DepositBalanceReduced(
+                weiToWithdraw, 
+                depositBalance[withdrawToAddress]
+            );
+        } else {
+            emit DepositBalanceNOTReduced(
+                weiToWithdraw, 
+                depositBalance[withdrawToAddress]
+            );
+        }
+        
     }
 }
