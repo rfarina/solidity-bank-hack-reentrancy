@@ -10,11 +10,10 @@ pragma solidity ^0.8.11;
     the invocation.
  */
 contract CalledContract {
-    function transfer(address payable to, uint value) public {
+    function transfer(address payable to, uint256 value) public {
         // send funds via transfer()
         to.transfer(value);
     }
-
 }
 
 contract Bank {
@@ -25,42 +24,39 @@ contract Bank {
 
     mapping(address => uint256) public depositBalance;
 
-    event DepositMade (
-        address intoAccount,
-        uint256 value
-    );
+    event DepositMade(address intoAccount, uint256 value);
 
-    event TransmittingFunds (
+    event TransmittingFunds(
         address originTx,
         address fromAddress,
         address toAddress,
         uint256 value
     );
 
-    event FundsTransmitted (
+    event FundsTransmitted(
         address originTx,
         address fromAddress,
         address toAddress,
         uint256 value,
-        bool    txsuccess,
-        bytes   callData
+        bool txsuccess,
+        bytes callData
     );
 
-    event FundsTransmissionFailure (
+    event FundsTransmissionFailure(
         address fromAddress,
         address toAddress,
         uint256 value,
-        bytes  errorMessage
+        bytes errorMessage
     );
 
-    event DepositBalanceReduced (
-        uint balanceReducedBy,
-        uint newDepositBalance
+    event DepositBalanceReduced(
+        uint256 balanceReducedBy,
+        uint256 newDepositBalance
     );
 
-    event DepositBalanceNOTReduced (
-        uint balanceReducedBy,
-        uint newDepositBalance
+    event DepositBalanceNOTReduced(
+        uint256 balanceReducedBy,
+        uint256 newDepositBalance
     );
 
     constructor() {
@@ -70,16 +66,21 @@ contract Bank {
     function initializeBalance() external payable {
         // Balance sent in msg.value will be added to contract balance automatically
     }
-    function getDepositBalance(address depositor) external view returns (uint256) {
+
+    function getDepositBalance(address depositor)
+        external
+        view
+        returns (uint256)
+    {
         return depositBalance[depositor];
     }
-    function getContractBalance() external view returns(uint) {
+
+    function getContractBalance() external view returns (uint256) {
         return address(this).balance;
     }
 
-
     function deposit(address depositor) external payable {
-    // function deposit() external payable {
+        // function deposit() external payable {
         /* 
             @dev payable function that accepts deposits from depositor
          */
@@ -92,11 +93,20 @@ contract Bank {
 
         emit DepositMade(depositor, msg.value);
     }
+    // Modifier to act as noReentrancy Guard
+    // Will not allow function to be invoked while still executing
+    bool locked = false;
+    modifier noReentrancy() {
+        require(!locked, "No reentrancy");
 
+        locked = true;
+        _;
+        locked = false;
+    }
 
-
-    function withdraw(address payable withdrawToAddress, uint weiToWithdraw) external {
-
+    function withdraw(address payable withdrawToAddress, uint256 weiToWithdraw)
+        external noReentrancy
+    {
         if (depositBalance[withdrawToAddress] < weiToWithdraw) {
             revert InsufficientFundsToWithdraw();
         }
@@ -106,9 +116,9 @@ contract Bank {
 
         //     emit FundsTransmitted (
         //         tx.origin,
-        //         address(this), 
-        //         withdrawToAddress, 
-        //         weiToWithdraw, 
+        //         address(this),
+        //         withdrawToAddress,
+        //         weiToWithdraw,
         //         true,
         //         bytes("funds sent via transfer()...")
         //     );
@@ -116,24 +126,23 @@ contract Bank {
         // } catch (bytes memory revertReason) {
 
         //     emit FundsTransmissionFailure(
-        //         address(this), 
-        //         withdrawToAddress, 
-        //         weiToWithdraw, 
+        //         address(this),
+        //         withdrawToAddress,
+        //         weiToWithdraw,
         //         revertReason
         //     );
         // }
-
 
         // // send requested funds via send()
         // bool success = withdrawToAddress.send(weiToWithdraw);
         // if (success) {
         //     bytes memory data = bytes("no data with send()...");
-            
+
         //     emit FundsTransmitted (
         //         tx.origin,
-        //         address(this), 
-        //         withdrawToAddress, 
-        //         weiToWithdraw, 
+        //         address(this),
+        //         withdrawToAddress,
+        //         weiToWithdraw,
         //         success,
         //         data
         //     );
@@ -141,55 +150,53 @@ contract Bank {
         //     bytes memory errorMessage = bytes("error on send()...");
 
         //     emit FundsTransmissionFailure(
-        //         address(this), 
-        //         withdrawToAddress, 
-        //         weiToWithdraw, 
+        //         address(this),
+        //         withdrawToAddress,
+        //         weiToWithdraw,
         //         errorMessage);
         // }
 
         // send funds via call()
-        emit TransmittingFunds (
+        emit TransmittingFunds(
             tx.origin,
-            address(this), 
-            withdrawToAddress, 
+            address(this),
+            withdrawToAddress,
             weiToWithdraw
         );
-        (bool success, bytes memory data) = withdrawToAddress.call{value:weiToWithdraw}("");  // send money to withdrawToAddress B4 deducting depositBalance !!
+        (bool success, bytes memory data) = withdrawToAddress.call{
+            value: weiToWithdraw
+        }(""); // send money to withdrawToAddress B4 deducting depositBalance !!
         if (success) {
-            
             // emit FundsTransmitted (
             //     tx.origin,
-            //     address(this), 
-            //     withdrawToAddress, 
-            //     weiToWithdraw, 
+            //     address(this),
+            //     withdrawToAddress,
+            //     weiToWithdraw,
             //     success,
             //     data
             // );
         } else {
-
             // emit FundsTransmissionFailure(
-            //     address(this), 
-            //     withdrawToAddress, 
-            //     weiToWithdraw, 
+            //     address(this),
+            //     withdrawToAddress,
+            //     weiToWithdraw,
             //     bytes("send funds via call() failed...")
             // );
         }
-
 
         // reduce balance
         if (depositBalance[withdrawToAddress] >= weiToWithdraw) {
             depositBalance[withdrawToAddress] -= weiToWithdraw;
 
             emit DepositBalanceReduced(
-                weiToWithdraw, 
+                weiToWithdraw,
                 depositBalance[withdrawToAddress]
             );
         } else {
             emit DepositBalanceNOTReduced(
-                weiToWithdraw, 
+                weiToWithdraw,
                 depositBalance[withdrawToAddress]
             );
         }
-        
     }
 }
